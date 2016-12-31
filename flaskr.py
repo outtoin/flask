@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # all the imports
 from __future__ import with_statement
 import sqlite3
@@ -20,14 +21,19 @@ PASSWORD = 'dlqmsdl1017'
 # API configuration
 client_id = "H33urDm7HsBZnMNYAJQp"
 client_secret = "0yyGwBVNLK"
-url = "https://openapi.naver.com/v1/search/book.xml?query=white"
-display = 50
+url = "https://openapi.naver.com/v1/search/book.xml?query=" + '%EC%86%8C%EC%84%A4'
+print(url)
+display = 30
+
+
 url = url + "&display=" + str(display)
 nrequest = urllib2.Request(url)
 
 # API Authentication
 nrequest.add_header("X-Naver-Client-Id", client_id)
 nrequest.add_header("X-Naver-Client-Secret", client_secret)
+
+print(nrequest)
 
 # html stripper
 def remove_html_tags(data):
@@ -53,6 +59,8 @@ def init_db():
 def before_request():
     init_db()
     g.db = connect_db()
+
+    # API data -> database
     response = urllib2.urlopen(nrequest)
     rescode = response.getcode()
     if (rescode == 200):
@@ -67,6 +75,10 @@ def before_request():
             jtitle = ''.join(title)
             jauthor = ''.join(author)
             jdescription = ''.join(description)
+
+            jtitle = remove_html_tags(jtitle)
+            jauthor = remove_html_tags(jauthor)
+            jdescription = remove_html_tags(jdescription)
 
             g.db.execute('insert into entries (title, author, description) values (?, ?, ?)',
                          [jtitle, jauthor, jdescription])
