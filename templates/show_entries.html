@@ -4,7 +4,10 @@
   {% endif %}
   <ul class=entries>
   {% for entry in entries %}
-    <li><a href="{{ url_for('book', isbn=entry.isbn) }}"><h3>{{ entry.title }}</h3></a>{{ entry.author|safe }}
+    <li><a href="{{ url_for('book', isbn=entry.isbn) }}">
+      <h3>{{ entry.title }}</h3>
+    </a>
+      {{ entry.author|safe }}
   {% else %}
     <li><em>Unbelievable.  No entries here so far</em>
   {% endfor %}

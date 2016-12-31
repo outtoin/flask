@@ -10,6 +10,11 @@ import urllib2
 import HTMLParser
 from bs4 import BeautifulSoup
 import re
+import random
+
+# global variable
+
+first_isbn = False
 
 # configuration
 DATABASE = "C:\Users\outtoin\Desktop\\flaskr\\flaskr.db"
@@ -22,7 +27,7 @@ PASSWORD = 'dlqmsdl1017'
 client_id = "H33urDm7HsBZnMNYAJQp"
 client_secret = "0yyGwBVNLK"
 url = "https://openapi.naver.com/v1/search/book.xml?query=" + '%EC%86%8C%EC%84%A4'
-display = 30
+display = 100
 
 
 url = url + "&display=" + str(display)
@@ -86,6 +91,21 @@ def before_request():
                          'values (?, ?, ?, ?)',
                          [jisbns[1], jtitle, jauthor, jdescription])
 
+        for i in soup.find_all('item'):
+            for j in soup.find_all('item'):
+                isbn = i.find('isbn')
+                jisbn = ''.join(isbn)
+                jisbn = remove_html_tags(jisbn)
+                jisbns = jisbn.split(" ")
+
+                isbn2 = j.find('isbn')
+                jisbn2 = ''.join(isbn2)
+                jisbn2 = remove_html_tags(jisbn2)
+                jisbns2 = jisbn2.split(" ")
+
+                g.db.execute('insert into flow (isbn1, isbn2, cnt) '
+                             'values (?, ?, ?)',
+                             [jisbns[1], jisbns2[1], random.randint(1, 6)])
     else:
         print("Error Code:" + rescode)
 
@@ -113,10 +133,31 @@ def add_entry():
 
 @app.route('/book', methods=['GET'])
 def book():
+    flag = request.referrer.split('=')
+    if len(flag) == 2:
+        isbn_old = flag[1]
+        isbn_new = format(request.args.get('isbn'))
+        query = "select cnt from flow where isbn1 = '%s' and isbn2 = '%s'" % (isbn_old, isbn_new)
+        print(query)
+        cur = g.db.execute(query)
+        if len(cur.fetchall()) == 0:
+            g.db.execute('insert into flow(isbn1, isbn2, cnt) values (?, ?, ?)',
+                 [isbn_old, isbn_new, 1])
+            g.db.commit()
+        else:
+            g.db.execute('update flow set cnt = cnt + 1' +
+                         " where isbn1 = '%s' and isbn2 = '%s'" % (isbn_old, isbn_new))
+            g.db.commit()
+        print(g.db.execute(query).fetchall())
+
     cur = g.db.execute('select title, author, description from entries where isbn=' + format(request.args.get('isbn')))
     entries = [dict(title=row[0], author=row[1], description=row[2]) for row in cur.fetchall()]
-    cur2 = g.db.execute('select title, author from entries limit 5')
-    r_entries = [dict(title=row[0], author=row[1]) for row in cur2.fetchall()]
+    cur2 = g.db.execute('select isbn, title, author from entries where isbn in ' +
+                        "(select isbn2 from flow where isbn1 ='%s' order by cnt desc limit 8)" % (format(request.args.get('isbn'))))
+
+    r_entries = [dict(isbn=row[0], title=row[1], author=row[2]) for row in cur2.fetchall()]
+
+
     return render_template('book.html', entries=entries, r_entries=r_entries)
 
 
