@@ -66,20 +66,25 @@ def before_request():
         body = response_body.decode('utf-8')
         soup = BeautifulSoup(body, 'html.parser')
         for i in soup.find_all('item'):
+            isbn = i.find('isbn')
             title = i.find('title')
             author = i.find('author')
             description = i.find('description')
 
+            jisbn = ''.join(isbn)
             jtitle = ''.join(title)
             jauthor = ''.join(author)
             jdescription = ''.join(description)
 
+            jisbn = remove_html_tags(jisbn)
+            jisbns = jisbn.split(" ")
             jtitle = remove_html_tags(jtitle)
             jauthor = remove_html_tags(jauthor)
             jdescription = remove_html_tags(jdescription)
 
-            g.db.execute('insert into entries (title, author, description) values (?, ?, ?)',
-                         [jtitle, jauthor, jdescription])
+            g.db.execute('insert into entries (isbn, title, author, description) '
+                         'values (?, ?, ?, ?)',
+                         [jisbns[1], jtitle, jauthor, jdescription])
 
     else:
         print("Error Code:" + rescode)
@@ -90,8 +95,8 @@ def teardown_request(exception):
 
 @app.route('/')
 def show_entries():
-    cur = g.db.execute('select id, title, author, description from entries order by id desc')
-    entries = [dict(id=row[0], title=row[1], author=row[2], description=row[3]) for row in cur.fetchall()]
+    cur = g.db.execute('select isbn, title, author, description from entries')
+    entries = [dict(isbn=row[0], title=row[1], author=row[2], description=row[3]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
 '''
@@ -106,9 +111,9 @@ def add_entry():
     return redirect(url_for('show_entries'))
 '''
 
-@app.route('/book/<id>', methods=['GET'])
-def book(id):
-    cur = g.db.execute('select title, author, description from entries where id=' + id)
+@app.route('/book', methods=['GET'])
+def book():
+    cur = g.db.execute('select title, author, description from entries where isbn=' + format(request.args.get('isbn')))
     entries = [dict(title=row[0], author=row[1], description=row[2]) for row in cur.fetchall()]
     return render_template('book.html', entries=entries)
 
