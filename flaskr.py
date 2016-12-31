@@ -22,7 +22,6 @@ PASSWORD = 'dlqmsdl1017'
 client_id = "H33urDm7HsBZnMNYAJQp"
 client_secret = "0yyGwBVNLK"
 url = "https://openapi.naver.com/v1/search/book.xml?query=" + '%EC%86%8C%EC%84%A4'
-print(url)
 display = 30
 
 
@@ -33,7 +32,6 @@ nrequest = urllib2.Request(url)
 nrequest.add_header("X-Naver-Client-Id", client_id)
 nrequest.add_header("X-Naver-Client-Secret", client_secret)
 
-print(nrequest)
 
 # html stripper
 def remove_html_tags(data):
@@ -92,8 +90,8 @@ def teardown_request(exception):
 
 @app.route('/')
 def show_entries():
-    cur = g.db.execute('select title, author, description from entries order by id desc')
-    entries = [dict(title=row[0], author=row[1], description=row[2]) for row in cur.fetchall()]
+    cur = g.db.execute('select id, title, author, description from entries order by id desc')
+    entries = [dict(id=row[0], title=row[1], author=row[2], description=row[3]) for row in cur.fetchall()]
     return render_template('show_entries.html', entries=entries)
 
 '''
@@ -107,6 +105,13 @@ def add_entry():
     flash('New entry was successfully posted')
     return redirect(url_for('show_entries'))
 '''
+
+@app.route('/book/<id>', methods=['GET'])
+def book(id):
+    cur = g.db.execute('select title, author, description from entries where id=' + id)
+    entries = [dict(title=row[0], author=row[1], description=row[2]) for row in cur.fetchall()]
+    return render_template('book.html', entries=entries)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

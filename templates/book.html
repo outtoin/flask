@@ -2,9 +2,9 @@
 {% block body %}
   {% if session.logged_in %}
   {% endif %}
-  <ul class=entries>
+  <ul class=book>
   {% for entry in entries %}
-    <li><a href="{{ url_for('book', id=entry.id) }}"><h3>{{ entry.title }}</h3></a>{{ entry.author|safe }}
+      <li><h3>{{ entry.title }}</h3><h2>{{ entry.author|safe }}</h2><br />{{ entry.description|safe }}
   {% else %}
     <li><em>Unbelievable.  No entries here so far</em>
   {% endfor %}
