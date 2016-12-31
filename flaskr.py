@@ -115,7 +115,9 @@ def add_entry():
 def book():
     cur = g.db.execute('select title, author, description from entries where isbn=' + format(request.args.get('isbn')))
     entries = [dict(title=row[0], author=row[1], description=row[2]) for row in cur.fetchall()]
-    return render_template('book.html', entries=entries)
+    cur2 = g.db.execute('select title, author from entries limit 5')
+    r_entries = [dict(title=row[0], author=row[1]) for row in cur2.fetchall()]
+    return render_template('book.html', entries=entries, r_entries=r_entries)
 
 
 @app.route('/login', methods=['GET', 'POST'])

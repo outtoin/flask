@@ -9,4 +9,10 @@
     <li><em>Unbelievable.  No entries here so far</em>
   {% endfor %}
   </ul>
+<ul class=recommend>
+    {% for entry in r_entries %}
+        <li><h3>{{ entry.title}}</h3>{{ entry.author }}</li>
+    {% endfor %}
+</ul>
 {% endblock %}
+
